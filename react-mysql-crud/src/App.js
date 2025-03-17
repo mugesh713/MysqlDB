@@ -1,71 +1,121 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import "./App.css";
 
 function App() {
     const [users, setUsers] = useState([]);
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
+    const [error, setError] = useState("");  // Error message state
     const [editingUser, setEditingUser] = useState(null);
 
     const API_URL = "http://localhost:3000/users";
 
     // Fetch Users
     const fetchUsers = async () => {
-        const res = await axios.get(API_URL);
-        setUsers(res.data);
+        try {
+            const res = await axios.get(API_URL);
+            setUsers(res.data);
+        } catch (error) {
+            console.error("Error fetching users:", error);
+        }
     };
 
     useEffect(() => {
         fetchUsers();
     }, []);
 
+    // Gmail Validation Function
+    const isValidGmail = (email) => {
+        const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+        return gmailRegex.test(email);
+    };
+
+    // Handle Email Input Change
+    const handleEmailChange = (e) => {
+        const newEmail = e.target.value;
+        setEmail(newEmail);
+
+        if (!isValidGmail(newEmail)) {
+            setError("Please enter a valid Gmail address (e.g., example@gmail.com)");
+        } else {
+            setError("");
+        }
+    };
+
     // Add User
     const addUser = async () => {
-        await axios.post(API_URL, { name, email });
-        setName("");
-        setEmail("");
-        fetchUsers();
+        if (!isValidGmail(email)) {
+            setError("Invalid Gmail address!");
+            return;
+        }
+
+        try {
+            await axios.post(API_URL, { name, email });
+            setName("");
+            setEmail("");
+            fetchUsers();
+        } catch (error) {
+            console.error("Error adding user:", error);
+        }
     };
 
     // Update User
     const updateUser = async () => {
-        await axios.put(`${API_URL}/${editingUser.id}`, { name, email });
-        setName("");
-        setEmail("");
-        setEditingUser(null);
-        fetchUsers();
+        if (!isValidGmail(email)) {
+            setError("Invalid Gmail address!");
+            return;
+        }
+
+        try {
+            await axios.put(`${API_URL}/${editingUser.id}`, { name, email });
+            setName("");
+            setEmail("");
+            setEditingUser(null);
+            fetchUsers();
+        } catch (error) {
+            console.error("Error updating user:", error);
+        }
     };
 
     // Delete User
     const deleteUser = async (id) => {
-        await axios.delete(`${API_URL}/${id}`);
-        fetchUsers();
+        try {
+            await axios.delete(`${API_URL}/${id}`);
+            fetchUsers();
+        } catch (error) {
+            console.error("Error deleting user:", error);
+        }
     };
 
     return (
-        <div style={{ textAlign: "center", padding: "20px" }}>
-            <h2>CRUD App with React & MySQL</h2>
+        <div className="container">
+            <h2>CRUD Operation - MySQL</h2>
 
-            <input
-                type="text"
-                placeholder="Enter Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-            />
-            <input
-                type="email"
-                placeholder="Enter Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-            />
-            {editingUser ? (
-                <button onClick={updateUser}>Update User</button>
-            ) : (
-                <button onClick={addUser}>Add User</button>
-            )}
+            <div className="input-container">
+                <input
+                    type="text"
+                    placeholder="Enter Name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                />
+                <input
+                    type="email"
+                    placeholder="Enter Email (Gmail only)"
+                    value={email}
+                    onChange={handleEmailChange}
+                />
+                {error && <p className="error">{error}</p>} {/* Display error message */}
+                
+                {editingUser ? (
+                    <button className="update-btn" onClick={updateUser} disabled={!!error}>Update User</button>
+                ) : (
+                    <button className="add-btn" onClick={addUser} disabled={!!error}>Add User</button>
+                )}
+            </div>
 
             <h3>User List</h3>
-            <table border="1" width="50%" style={{ margin: "auto" }}>
+            <table>
                 <thead>
                     <tr>
                         <th>ID</th>
@@ -81,12 +131,12 @@ function App() {
                             <td>{user.name}</td>
                             <td>{user.email}</td>
                             <td>
-                                <button onClick={() => {
+                                <button className="edit-btn" onClick={() => {
                                     setEditingUser(user);
                                     setName(user.name);
                                     setEmail(user.email);
                                 }}>Edit</button>
-                                <button onClick={() => deleteUser(user.id)}>Delete</button>
+                                <button className="delete-btn" onClick={() => deleteUser(user.id)}>Delete</button>
                             </td>
                         </tr>
                     ))}

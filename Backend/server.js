@@ -1,6 +1,7 @@
 const express = require("express");
 const mysql = require("mysql");
 const cors = require("cors");
+require("dotenv").config(); // Load environment variables from .env file
 
 const app = express();
 app.use(cors());
@@ -8,18 +9,22 @@ app.use(express.json());
 
 // Database Connection
 const db = mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "1234",
-    database: "userdb",
+    host: process.env.DB_HOST,       // Remote database host (not localhost)
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: process.env.DB_PORT || 3306,
 });
 
 db.connect(err => {
-    if (err) throw err;
+    if (err) {
+        console.error("Database connection failed:", err);
+        process.exit(1);
+    }
     console.log("MySQL Connected...");
 });
 
-// Create User
+// CRUD Routes (No changes needed)
 app.post("/users", (req, res) => {
     const { name, email } = req.body;
     const sql = "INSERT INTO users (name, email) VALUES (?, ?)";
@@ -29,7 +34,6 @@ app.post("/users", (req, res) => {
     });
 });
 
-// Read Users
 app.get("/users", (req, res) => {
     const sql = "SELECT * FROM users";
     db.query(sql, (err, results) => {
@@ -38,7 +42,6 @@ app.get("/users", (req, res) => {
     });
 });
 
-// Update User
 app.put("/users/:id", (req, res) => {
     const { id } = req.params;
     const { name, email } = req.body;
@@ -49,7 +52,6 @@ app.put("/users/:id", (req, res) => {
     });
 });
 
-// Delete User
 app.delete("/users/:id", (req, res) => {
     const { id } = req.params;
     const sql = "DELETE FROM users WHERE id=?";
@@ -59,8 +61,6 @@ app.delete("/users/:id", (req, res) => {
     });
 });
 
-// Start Server
 app.listen(3000, () => {
     console.log("Server running on port 3000...");
 });
-    
