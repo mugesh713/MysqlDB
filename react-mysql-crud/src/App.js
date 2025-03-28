@@ -9,7 +9,7 @@ function App() {
     const [error, setError] = useState("");  // Error message state
     const [editingUser, setEditingUser] = useState(null);
 
-    const API_URL = "http://localhost:3000/users";
+    const API_URL = "https://mysqldb-3.onrender.com/users";
 
     // Fetch Users
     const fetchUsers = async () => {
